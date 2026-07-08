@@ -191,10 +191,10 @@ The project comes with a **web map point selection tool**.`location-picker/serve
 Startup example:
 
 ```bash
-# http（先跑通流程，再用 https）
+# http（first make sure the workflow is working, then enable https）
 TOKEN=$(openssl rand -hex 24) PORT=8080 node server.js
 
-# https（复用 acme.sh 证书，续期无需重启，进程每 12 小时自动热加载）
+# https (reuses acme.sh certificates; certificate renewals require no restart, and the service automatically hot-reloads them every 12 hours）
 TOKEN=$(openssl rand -hex 24) PORT=8443 \
 CERT=/root/cert/example.com/fullchain.pem \
 KEY=/root/cert/example.com/privkey.pem \
@@ -204,7 +204,7 @@ node server.js
 Then the module `argument=` The end `configUrl` Written as:
 
 ```
-&configUrl=https://example.com:8443/loc.json?token=上面那个TOKEN
+&configUrl=https://example.com:8443/loc.json?token=(token_goes_here)
 ```
 
 > ⚠️ **The URL must include the following at the end. `?token=<TOKEN>`**And this token must be consistent with the environment variables set when the server starts. `TOKEN` The values ​​must be exactly the same. Otherwise:
@@ -248,8 +248,8 @@ Some apps, such as Apple News, rely not only on location services but also on va
 ## Quick Reference for Operation Sequence
 
 ```
-导入模块 → 开HTTPS解密+加域名 → 装证书并信任 → 开代理 → 改坐标保存
-→ 关定位等10秒再开(没变就多试几次) → 打开地图验证
+Import the module → Enable HTTPS decryption + add the domain → Install the certificate and trust it → Enable the proxy → Change the coordinates and save
+→ Turn Location Services off, wait 10 seconds, then turn them back on (if the location doesn't change, try a few more times) → Open the map app to verify
 ```
 
 I wish you a smooth configuration process. If you get stuck at any step, simply check each item in the "Common Problems Troubleshooting" section above.
