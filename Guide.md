@@ -171,7 +171,7 @@ The project comes with a **web map point selection tool**.`location-picker/serve
 1. In the project `location-picker/server.js` Upload it to your server and run it (the startup command is written in the comments at the beginning of the file, which supports built-in HTTPS and reuse of existing certificates).
 2. In the Shadowrocket module `argument=` **Append to the end** (preceding parameters are retained):
    ```
-   &configUrl=https://你的域名:端口/loc.json?token=你的密码
+   &configUrl=https://your-domain:port/loc.json?token=your-password
    ```
 3. To change your location later: **Open a webpage → Click on the map → Click step six to turn location services on and off for the changes to take effect.**
 
