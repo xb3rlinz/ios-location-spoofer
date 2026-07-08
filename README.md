@@ -2,7 +2,7 @@
 
 Using the HTTPS decryption function of proxy software, Apple Maps location can be tricked into being located anywhere in the world.
 
-> 📖 **Beginners, read this first!** → [**Beginner-Friendly, Step-by-Step Guide (with Pictures)**](Guide.md)(Step-by-step guide to installation, configuration, and activation, including troubleshooting common problems)
+> 📖 **Beginners, read this first!** → [**Beginner-Friendly, Step-by-Step Guide**](Guide.md)(Step-by-step guide to installation, configuration, and activation, including troubleshooting common problems)
 
 ## Reference Projects
 
