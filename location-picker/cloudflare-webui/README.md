@@ -1,476 +1,458 @@
-# Cloudflare 网页后台部署教程
+# Deploying with the Cloudflare Dashboard
 
-这是一份给新手看的 Cloudflare Worker 网页后台部署教程。它不要求本地安装 Node.js、npm 或 Wrangler，也不要求理解多文件 Worker 项目结构。
+This guide is intended for beginners. It does **not** require installing Node.js, npm, or Wrangler locally, nor does it require understanding a multi-file Worker project.
 
-如果你会命令行，推荐使用 [`../worker/`](../worker/) 里的 Wrangler 部署方式。  
-如果你只想在 Cloudflare 网页后台复制粘贴，请使用本目录的单文件 Worker：
+If you're comfortable using the command line, it's recommended to use the Wrangler deployment method in `../worker/`.
+
+If you just want to copy and paste code into the Cloudflare Dashboard, use the single-file Worker included in this folder:
 
 ```text
 location-picker/cloudflare-webui/worker.js
 ```
 
-## 这份教程解决什么问题
+## What This Guide Does
 
-`location-picker/server.js` 是 Node/VPS/NAS 版，不适合直接部署到 Cloudflare Worker。Cloudflare Worker 也不能使用 Node 的 `http`、`https`、`fs` 和本地 `loc.json`。
+`location-picker/server.js` is designed for Node.js, VPS, or NAS deployments. It **cannot** be deployed directly to Cloudflare Workers because Workers don't support Node modules such as `http`, `https`, `fs`, or local files like `loc.json`.
 
-Cloudflare 正确结构是：
+The correct Cloudflare architecture is:
 
 ```text
-Cloudflare Worker：提供地图页面和 API
-Cloudflare KV：保存当前坐标
-Worker Secret：保存访问口令 TOKEN
+Cloudflare Worker   → Serves the map page and API
+Cloudflare KV       → Stores the current coordinates
+Worker Secret       → Stores the access token (TOKEN)
 ```
 
-为了避免 Cloudflare 在线编辑器的多文件入口问题，本目录提供了一个已经合并好的 `worker.js`。把它复制到 Cloudflare Worker 默认代码文件即可。
+To avoid issues with Cloudflare's online editor and multi-file projects, this folder provides a pre-built, single-file `worker.js`. Simply replace the default Worker code with it.
 
-## 一、创建 Worker
+---
 
-1. 打开 Cloudflare Dashboard。
-2. 进入：
+# 1. Create a Worker
+
+1. Open the Cloudflare Dashboard.
+2. Go to:
 
 ```text
 Workers & Pages
 ```
 
-3. 点击：
+3. Click:
 
 ```text
 Create application
 ```
 
-4. 选择：
+4. Choose:
 
 ```text
 Worker
 ```
 
-不要选择 Pages。这个工具需要 API 和 KV，不是静态网站。
+**Do not choose Pages.** This project requires APIs and KV storage, not a static website.
 
-5. Worker 名字可以填：
+5. Name your Worker, for example:
 
 ```text
 ios-location-picker
 ```
 
-6. 创建后进入 Worker，点击：
+6. Open the Worker and click:
 
 ```text
 Edit code
 ```
 
-## 二、复制单文件 worker.js
+---
 
-1. 打开本目录的：
+# 2. Copy the Single-File Worker
+
+1. Open:
 
 ```text
 location-picker/cloudflare-webui/worker.js
 ```
 
-2. 复制全部内容。
-3. 回到 Cloudflare 的代码编辑器。
-4. 找到默认文件，通常叫：
-
-```text
-worker.js
-```
-
-或者 Cloudflare 默认显示的 Hello World 文件。
-
-5. 删除原来的 Hello World 代码。
-6. 粘贴本目录 `worker.js` 的全部内容。
-7. 点击：
+2. Copy the entire file.
+3. Return to the Cloudflare code editor.
+4. Open the default file (usually named `worker.js`).
+5. Delete the default Hello World code.
+6. Paste the contents of `worker.js`.
+7. Click:
 
 ```text
 Deploy
 ```
 
-部署后访问带 TOKEN 的 Worker 主页，如果能看到地图页面，说明代码部分已经成功。例如：
+Once deployed, visit:
 
 ```text
-https://你的Worker地址/?token=你的TOKEN
+https://your-worker.workers.dev/?token=YOUR_TOKEN
 ```
 
-不带 TOKEN 访问主页应该返回 403。
+If the map loads, the code was deployed successfully.
 
-## 三、创建 KV
+Opening the homepage **without** a token should return:
 
-1. 回到 Cloudflare Dashboard。
-2. 进入：
+```json
+{"error":"bad token"}
+```
+
+---
+
+# 3. Create a KV Namespace
+
+1. Return to the Cloudflare Dashboard.
+2. Go to:
 
 ```text
 Workers & Pages
 ```
 
-3. 找到：
+3. Open:
 
 ```text
 KV
 ```
 
-或：
+(or **Workers KV**)
 
-```text
-Workers KV
-```
+4. Create a namespace.
 
-4. 创建一个 namespace。
-5. 名字建议填：
+Suggested name:
 
 ```text
 LOC_KV
 ```
 
-## 四、绑定 KV 到 Worker
+---
 
-1. 进入你的 Worker。
-2. 进入：
+# 4. Bind the KV Namespace
+
+1. Open your Worker.
+2. Go to:
 
 ```text
 Settings
 ```
 
-3. 找到：
+3. Open:
 
 ```text
 Bindings
 ```
 
-4. 点击：
+4. Click:
 
 ```text
-Add binding
+Add Binding
 ```
 
-5. 类型选择：
+5. Select:
 
 ```text
 KV Namespace
 ```
 
-6. 变量名必须填：
+6. Set the variable name **exactly** as:
 
 ```text
 LOC_KV
 ```
 
-7. 选择刚才创建的 KV namespace。
-8. 保存。
+7. Select the namespace you created.
+8. Save.
 
-注意：变量名必须一模一样。不能写成 `loc_kv`、`KV` 或 `LOCATION_KV`。
+⚠️ The variable name must be **exactly** `LOC_KV`.
 
-## 五、添加 TOKEN
+---
 
-TOKEN 是地图保存和配置读取的访问口令。
+# 5. Add the TOKEN Secret
 
-1. 进入 Worker 的：
+The TOKEN protects access to the map and configuration.
+
+1. Go to:
 
 ```text
 Settings
 ```
 
-2. 找到：
+2. Open:
 
 ```text
 Variables and Secrets
 ```
 
-3. 点击添加变量。
-4. 类型选择：
+3. Add a new variable.
+4. Choose:
 
 ```text
 Secret
 ```
 
-5. 名字填：
+5. Name:
 
 ```text
 TOKEN
 ```
 
-6. 值填一串足够长的随机字符，例如：
+6. Enter a long, random string.
+
+Example:
 
 ```text
-把这里换成你自己的随机字符串
+Replace this with your own secure random string
 ```
 
-可以用密码管理器生成，也可以用其他随机字符串生成器。不要使用 `123456`、生日、手机号等弱口令。
+Avoid weak passwords like birthdays, phone numbers, or `123456`.
 
-保存后，如果 Cloudflare 提示重新部署，请再点一次 Deploy。
+If Cloudflare asks you to redeploy, click **Deploy** again.
 
-## 六、检查是否成功
+---
 
-假设 Worker 地址是：
+# 6. Verify Everything Works
+
+If your Worker URL is:
 
 ```text
-https://ios-location-picker.你的账号.workers.dev
+https://ios-location-picker.your-account.workers.dev
 ```
 
-打开：
+Visit:
 
 ```text
-https://ios-location-picker.你的账号.workers.dev/health
+https://ios-location-picker.your-account.workers.dev/health
 ```
 
-必须看到：
+You should see:
 
 ```json
 {"ok":true,"kv":true,"tokenConfigured":true}
 ```
 
-字段含义：
+Meaning:
 
-| 字段 | 正常值 | 说明 |
-|------|--------|------|
-| `ok` | `true` | Worker 正常 |
-| `kv` | `true` | KV 绑定成功 |
-| `tokenConfigured` | `true` | TOKEN 已配置 |
+| Field | Expected | Meaning |
+|--------|----------|---------|
+| `ok` | `true` | Worker is running |
+| `kv` | `true` | KV is correctly bound |
+| `tokenConfigured` | `true` | TOKEN secret is configured |
 
-如果看到：
+If `kv` is `false`, verify the KV binding is named `LOC_KV`.
 
-```json
-{"ok":true,"kv":false,"tokenConfigured":true}
-```
+If `tokenConfigured` is `false`, add the `TOKEN` secret.
 
-说明 KV 没绑定好。回到 Bindings，检查变量名是否是：
+---
 
-```text
-LOC_KV
-```
+# 7. Optional: Use Your Own Domain
 
-如果看到：
+Instead of using a long `workers.dev` URL, you can connect a custom domain.
 
-```json
-{"ok":true,"kv":true,"tokenConfigured":false}
-```
-
-说明 TOKEN 没加好。回到 Variables and Secrets，添加 Secret：
-
-```text
-TOKEN
-```
-
-## 七、绑定自己的域名
-
-如果不想用很长的 `workers.dev` 地址，可以绑定自己的域名。
-
-例如：
+Example:
 
 ```text
 myloc.example.com
 ```
 
-操作：
-
-1. 进入你的 Worker。
-2. 进入：
+Go to:
 
 ```text
-Settings
+Settings → Domains & Routes
 ```
 
-3. 找到：
+(or **Triggers**)
 
-```text
-Domains & Routes
-```
-
-或：
-
-```text
-Triggers
-```
-
-4. 点击：
+Choose:
 
 ```text
 Add Custom Domain
 ```
 
-5. 填你的域名：
+Enter:
 
 ```text
 myloc.example.com
 ```
 
-6. 保存。
+If your DNS is already managed by Cloudflare, HTTPS certificates are configured automatically.
 
-如果域名 DNS 已经托管在 Cloudflare，Cloudflare 会自动处理 DNS 和 HTTPS 证书。
-
-绑定成功后检查：
+Verify by visiting:
 
 ```text
 https://myloc.example.com/health
 ```
 
-正常应该返回：
+---
 
-```json
-{"ok":true,"kv":true,"tokenConfigured":true}
-```
+# 8. Shadowrocket Configuration
 
-## 八、Shadowrocket 小火箭配置
-
-在小火箭模块的 `argument=` 最后追加：
+Append this to the end of your module's `argument=`:
 
 ```text
-&configUrl=https://你的域名/loc.json?token=你的TOKEN
+&configUrl=https://your-domain/loc.json?token=YOUR_TOKEN
 ```
 
-如果没有自定义域名，就使用 Worker 地址：
+Or, if you're using the default Worker URL:
 
 ```text
-&configUrl=https://ios-location-picker.你的账号.workers.dev/loc.json?token=你的TOKEN
+&configUrl=https://ios-location-picker.your-account.workers.dev/loc.json?token=YOUR_TOKEN
 ```
 
-完整示例：
+The `[MITM]` section remains unchanged.
 
-```ini
-[Script]
-iOS Location Spoofer = type=http-response,pattern=^https?:\/\/(?:gs-loc(?:-cn)?\.apple\.com|bluedot\.is\.autonavi\.com(?:\.gds\.alibabadns\.com)?)\/clls\/wloc(?:\?.*)?$,requires-body=1,binary-body-mode=1,max-size=1048576,timeout=10,script-path=https://raw.githubusercontent.com/mekos2772/ios-location-spoofer/main/location-spoofer.js,argument=mode=response&latitude=37.3349&longitude=-122.00902&horizontalAccuracy=39&verticalAccuracy=1000&altitude=530&debug=false&configUrl=https://你的域名/loc.json?token=你的TOKEN
+---
 
-[MITM]
-hostname = %APPEND% gs-loc.apple.com, gs-loc-cn.apple.com, bluedot.is.autonavi.com, bluedot.is.autonavi.com.gds.alibabadns.com
-```
+# 9. Using the Map
 
-`[MITM]` 部分保持不变。
+A common mistake:
 
-## 九、地图怎么用
+> **Searching for a place does NOT save the location.**
 
-最容易漏的一点：
+Correct workflow:
+
+1. Open:
 
 ```text
-搜索地点不等于保存定位。
+https://your-domain/?token=YOUR_TOKEN
 ```
 
-正确流程：
-
-1. 打开地图页面：
+2. Search for a place.
+3. The map moves to that area.
+4. Tap the map to place a pin.
+5. Tap:
 
 ```text
-https://你的域名/?token=你的TOKEN
+Save Location
 ```
 
-2. 搜索地点。
-3. 地图会移动到搜索结果附近。
-4. 一定要在地图上点一下，放置图钉。
-5. 点击：
+6. Wait for the "Saved" confirmation.
+
+Then verify:
 
 ```text
-保存定位
+https://your-domain/loc.json?token=YOUR_TOKEN
 ```
 
-6. 看到已保存提示。
+If the coordinates changed, Cloudflare saved them successfully.
 
-然后检查：
+---
+
+# 10. Apply the Spoofed Location on iPhone
+
+After saving a location:
+
+1. Disconnect and reconnect Shadowrocket.
+2. Turn **Location Services** off and back on.
+3. Open Apple Maps to test.
+
+If it still doesn't work, check:
+
+- The Shadowrocket module is enabled.
+- HTTPS decryption (MITM) is enabled.
+- The CA certificate is installed and trusted.
+- `configUrl` was added correctly.
+- `loc.json?token=...` returns the updated coordinates.
+
+---
+
+# 11. Frequently Asked Questions
+
+### The homepage loads without a token. Is that safe?
+
+No. The latest version requires a valid TOKEN to access both the homepage and API.
+
+Without a token:
 
 ```text
-https://你的域名/loc.json?token=你的TOKEN
+https://your-domain/
 ```
 
-如果里面的经纬度已经变化，说明 Cloudflare 保存成功。
-
-## 十、iPhone 上生效步骤
-
-保存地图定位后：
-
-1. 小火箭断开重连。
-2. iPhone 关开定位服务。
-3. 打开 Apple 地图测试。
-
-如果还是没变，检查：
-
-- 小火箭模块是否真的启用
-- HTTPS 解密 / MITM 是否开启
-- CA 证书是否已安装并信任
-- 模块参数里是否真的加了 `configUrl`
-- `loc.json?token=...` 返回的经纬度是否已经变化
-
-## 十一、常见问题
-
-### 访问主页不带 token 也能看到地图，安全吗？
-
-新版单文件 Worker 已经收紧为：地图主页也必须带正确 TOKEN 才能打开。
-
-不带 TOKEN 访问：
-
-```text
-https://你的域名/
-```
-
-应该返回：
+Returns:
 
 ```json
 {"error":"bad token"}
 ```
 
-不带 TOKEN 访问：
+Likewise:
 
 ```text
-https://你的域名/loc.json
+https://your-domain/loc.json
 ```
 
-应该返回：
+Returns:
 
 ```json
 {"error":"bad token"}
 ```
 
-这说明坐标接口没有裸露。
+---
 
-### `/health` 正常，但小火箭没变化
+### `/health` works, but Shadowrocket doesn't.
 
-先检查：
+Check:
 
 ```text
-https://你的域名/loc.json?token=你的TOKEN
+https://your-domain/loc.json?token=YOUR_TOKEN
 ```
 
-如果经纬度还是默认：
+If it still shows the default coordinates:
 
 ```text
 37.3349, -122.00902
 ```
 
-说明你还没有在地图上点图钉并保存。
+You haven't placed a pin and saved it yet.
 
-### 搜索后没变化
+---
 
-搜索只是移动地图视野。必须在地图上点一下放图钉，再点保存。
+### Searching doesn't change the location.
 
-### Cloudflare 显示 Hello World
+Searching only moves the map.
 
-说明你没有替换默认 `worker.js`，或者部署的不是当前 Worker。
+You must:
 
-请重新打开 Worker 的 Edit code，把本目录里的 `worker.js` 全部复制进去，然后 Deploy。
+1. Tap the map.
+2. Place a pin.
+3. Tap **Save Location**.
 
-### 报 `Unexpected token '<'`
+---
 
-说明你复制了 GitHub 网页 HTML，不是真正的 JS 文件。
+### Cloudflare still shows "Hello World"
 
-请使用本目录里的：
+You didn't replace the default `worker.js`, or you deployed the wrong Worker.
+
+Open **Edit Code**, replace everything with the provided `worker.js`, then deploy again.
+
+---
+
+### I get `Unexpected token '<'`
+
+You copied the GitHub webpage HTML instead of the actual JavaScript file.
+
+Copy the raw contents of:
 
 ```text
 worker.js
 ```
 
-不要复制 GitHub 网页源码。
+—not the rendered GitHub page.
 
-## 十二、最终使用模板
+---
 
-地图页面：
+# 12. Final URLs
+
+Map page:
 
 ```text
-https://你的域名/?token=你的TOKEN
+https://your-domain/?token=YOUR_TOKEN
 ```
 
-小火箭 configUrl：
+Configuration URL:
 
 ```text
-https://你的域名/loc.json?token=你的TOKEN
+https://your-domain/loc.json?token=YOUR_TOKEN
 ```
 
-小火箭追加参数：
+Shadowrocket parameter:
 
 ```text
-&configUrl=https://你的域名/loc.json?token=你的TOKEN
+&configUrl=https://your-domain/loc.json?token=YOUR_TOKEN
 ```
