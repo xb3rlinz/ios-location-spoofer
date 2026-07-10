@@ -1,2 +1,13 @@
-longtitude - 73.98595
-latitidue - 40.75713
+longtitude - 
+latitidue - 
+
+#!url=https://raw.githubusercontent.com/xb3rlinz/ios-location-spoofer/refs/heads/main/ios-location-spoofer.sgmodule
+#!name=Time Square NY
+#!desc=Place
+#!homepage=https://github.com/xb3rlinz/ios-location-spoofer
+
+[Script]
+LS = type=http-response,pattern=^https?:\/\/(?:gs-loc(?:-cn)?\.apple\.com|bluedot\.is\.autonavi\.com(?:\.gds\.alibabadns\.com)?)\/clls\/wloc(?:\?.*)?$,requires-body=1,binary-body-mode=1,max-size=1048576,timeout=10,script-path=https://raw.githubusercontent.com/xb3rlinz/ios-location-spoofer/main/location-spoofer.js,argument=mode=response&latitude=40.75713&longitude=73.98595&horizontalAccuracy=5&verticalAccuracy=15&altitude=48&debug=false
+
+[MITM]
+hostname = %APPEND% gs-loc.apple.com, gs-loc-cn.apple.com, bluedot.is.autonavi.com, bluedot.is.autonavi.com.gds.alibabadns.com
